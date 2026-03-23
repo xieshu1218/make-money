@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竞彩推荐记录表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-card.positive .value {
+            color: #52c41a;
+        }
+        
+        .stat-card.negative .value {
+            color: #f5222d;
+        }
+        
+        .table-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .table-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .editable {
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            padding: 5px;
+            border-radius: 4px;
+            min-width: 60px;
+            display: inline-block;
+        }
+        
+        .editable:focus {
+            outline: none;
+            border-color: #faad14;
+            background: white;
+        }
+        
+        .status-pending {
+            color: #faad14;
+            font-weight: bold;
+        }
+        
+        .status-hit {
+            color: #52c41a;
+            font-weight: bold;
+        }
+        
+        .status-miss {
+            color: #f5222d;
+            font-weight: bold;
+        }
+        
+        .confidence {
+            color: #faad14;
+        }
+        
+        .probability-high {
+            color: #52c41a;
+            font-weight: bold;
+        }
+        
+        .probability-medium {
+            color: #faad14;
+            font-weight: bold;
+        }
+        
+        .probability-low {
+            color: #f5222d;
+            font-weight: bold;
+        }
+        
+        .positive {
+            color: #52c41a;
+            font-weight: bold;
+        }
+        
+        .negative {
+            color: #f5222d;
+            font-weight: bold;
+        }
+        
+        .plan-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .plan-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .plan-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .plan-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .plan-item:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .note {
+            background: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .note h4 {
+            color: #1890ff;
+            margin-bottom: 10px;
+        }
+        
+        .note ul {
+            margin-left: 20px;
+            color: #666;
+        }
+        
+        .note li {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 竞彩推荐记录表</h1>
+        
+        <!-- 统计卡片 -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>总投入</h3>
+                <div class="value" id="total-invest">500</div>
+            </div>
+            <div class="stat-card">
+                <h3>累计收益</h3>
+                <div class="value" id="total-profit">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>收益率</h3>
+                <div class="value" id="total-return">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>命中场次</h3>
+                <div class="value" id="hit-count">-</div>
+            </div>
+        </div>
+        
+        <!-- 推荐记录表 -->
+        <div class="table-section">
+            <h2>📋 推荐记录</h2>
+            <table id="record-table">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>比赛</th>
+                        <th>推荐</th>
+                        <th>玩法</th>
+                        <th>信心指数</th>
+                        <th>概率评估</th>
+                        <th>投入(元)</th>
+                        <th>赔率</th>
+                        <th>赛果</th>
+                        <th>收益(元)</th>
+                        <th>收益率</th>
+                        <th>累计收益</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-id="1">
+                        <td>2026-03-23</td>
+                        <td>拉普拉塔大学生 vs 科尔多瓦中央</td>
+                        <td>主胜</td>
+                        <td>胜平负</td>
+                        <td class="confidence">⭐⭐⭐⭐⭐</td>
+                        <td class="probability-high">极高(75%)</td>
+                        <td>300</td>
+                        <td><span class="editable" contenteditable="true" data-field="odds">待填</span></td>
+                        <td><span class="editable status-pending" contenteditable="true" data-field="result">待确认</span></td>
+                        <td class="profit">-</td>
+                        <td class="return-rate">-</td>
+                        <td class="cumulative">-</td>
+                        <td>阿甲第2，联赛最佳防守</td>
+                    </tr>
+                    <tr data-id="2">
+                        <td>2026-03-23</td>
+                        <td>湖人 vs 活塞</td>
+                        <td>客胜</td>
+                        <td>让分胜负</td>
+                        <td class="confidence">⭐⭐⭐⭐</td>
+                        <td class="probability-high">高(65%)</td>
+                        <td>200</td>
+                        <td><span class="editable" contenteditable="true" data-field="odds">待填</span></td>
+                        <td><span class="editable status-pending" contenteditable="true" data-field="result">待确认</span></td>
+                        <td class="profit">-</td>
+                        <td class="return-rate">-</td>
+                        <td class="cumulative">-</td>
+                        <td>活塞核心坎宁安缺阵</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="btn-container">
+                <button class="btn" onclick="calculate()">💰 计算收益</button>
+                <button class="btn" onclick="exportData()">📥 导出数据</button>
+            </div>
+        </div>
+        
+        <!-- 投资方案 -->
+        <div class="plan-section">
+            <div class="plan-card">
+                <h3>📊 概率分级投资方案</h3>
+                <div class="plan-item">
+                    <span>极高(75%+)</span>
+                    <span>⭐⭐⭐⭐⭐</span>
+                    <span style="color: #52c41a; font-weight: bold;">300元</span>
+                </div>
+                <div class="plan-item">
+                    <span>高(60%-75%)</span>
+                    <span>⭐⭐⭐⭐</span>
+                    <span style="color: #52c41a; font-weight: bold;">200元</span>
+                </div>
+                <div class="plan-item">
+                    <span>中(50%-60%)</span>
+                    <span>⭐⭐⭐</span>
+                    <span style="color: #faad14; font-weight: bold;">100元</span>
+                </div>
+                <div class="plan-item">
+                    <span>低(<50%)</span>
+                    <span>⭐⭐</span>
+                    <span style="color: #f5222d; font-weight: bold;">0元(观望)</span>
+                </div>
+            </div>
+            
+            <div class="plan-card">
+                <h3>⚠️ 投资原则</h3>
+                <div class="plan-item">
+                    <span>单日总投入上限</span>
+                    <span style="color: #667eea; font-weight: bold;">500元</span>
+                </div>
+                <div class="plan-item">
+                    <span>单场投入上限</span>
+                    <span style="color: #667eea; font-weight: bold;">300元</span>
+                </div>
+                <div class="plan-item">
+                    <span>止损线</span>
+                    <span style="color: #f5222d; font-weight: bold;">-20%</span>
+                </div>
+                <div class="plan-item">
+                    <span>连续未命中建议</span>
+                    <span style="color: #faad14; font-weight: bold;">降低投入</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 说明 -->
+        <div class="note">
+            <h4>📌 使用说明</h4>
+            <ul>
+                <li>点击"赔率"和"赛果"单元格可直接编辑（黄色背景区域）</li>
+                <li>输入时自动保存，显示"✓ 已保存"提示</li>
+                <li>赛果请填写"命中"或"未命中"</li>
+                <li>填写赔率和赛果后，自动计算收益</li>
+                <li>数据保存在浏览器本地，刷新页面不会丢失</li>
+                <li>点击"📥 导出数据"可导出CSV文件备份</li>
+            </ul>
+        </div>
+        
+        <!-- 钉钉分享说明 -->
+        <div class="note" style="background: #fff7e6; border-left-color: #faad14;">
+            <h4 style="color: #faad14;">📤 钉钉分享方法</h4>
+            <ul>
+                <li><b>方法1：</b>截图表格 → 钉钉直接发送图片</li>
+                <li><b>方法2：</b>点击"导出数据" → 上传CSV到钉钉文件</li>
+                <li><b>方法3：</b>部署到GitHub Pages/Vercel获得在线链接（需技术支持）</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 从localStorage加载数据
+        function loadData() {
+            const data = localStorage.getItem('bettingRecords');
+            if (data) {
+                const records = JSON.parse(data);
+                records.forEach(record => {
+                    const row = document.querySelector(`tr[data-id="${record.id}"]`);
+                    if (row) {
+                        row.querySelector('[data-field="odds"]').textContent = record.odds;
+                        row.querySelector('[data-field="result"]').textContent = record.result;
+                        if (record.result === '命中') {
+                            row.querySelector('[data-field="result"]').className = 'editable status-hit';
+                        } else if (record.result === '未命中') {
+                            row.querySelector('[data-field="result"]').className = 'editable status-miss';
+                        }
+                    }
+                });
+                calculate();
+            }
+        }
+        
+        // 保存数据到localStorage
+        function saveData() {
+            const rows = document.querySelectorAll('#record-table tbody tr');
+            const records = [];
+            rows.forEach(row => {
+                records.push({
+                    id: row.getAttribute('data-id'),
+                    odds: row.querySelector('[data-field="odds"]').textContent,
+                    result: row.querySelector('[data-field="result"]').textContent
+                });
+            });
+            localStorage.setItem('bettingRecords', JSON.stringify(records));
+        }
+        
+        // 计算收益
+        function calculate() {
+            const rows = document.querySelectorAll('#record-table tbody tr');
+            let cumulative = 0;
+            let hitCount = 0;
+            let totalInvest = 0;
+            
+            rows.forEach(row => {
+                const invest = parseFloat(row.cells[6].textContent);
+                const oddsText = row.querySelector('[data-field="odds"]').textContent;
+                const result = row.querySelector('[data-field="result"]').textContent;
+                
+                totalInvest += invest;
+                
+                if (oddsText !== '待填' && result !== '待确认') {
+                    const odds = parseFloat(oddsText);
+                    let profit = 0;
+                    
+                    if (result === '命中') {
+                        profit = odds * invest - invest;
+                        hitCount++;
+                        row.querySelector('[data-field="result"]').className = 'editable status-hit';
+                    } else if (result === '未命中') {
+                        profit = -invest;
+                        row.querySelector('[data-field="result"]').className = 'editable status-miss';
+                    }
+                    
+                    cumulative += profit;
+                    
+                    const profitCell = row.querySelector('.profit');
+                    const returnCell = row.querySelector('.return-rate');
+                    const cumulativeCell = row.querySelector('.cumulative');
+                    
+                    profitCell.textContent = profit.toFixed(2);
+                    profitCell.className = profit >= 0 ? 'profit positive' : 'profit negative';
+                    
+                    const returnRate = profit / invest;
+                    returnCell.textContent = (returnRate * 100).toFixed(2) + '%';
+                    returnCell.className = returnRate >= 0 ? 'return-rate positive' : 'return-rate negative';
+                    
+                    cumulativeCell.textContent = cumulative.toFixed(2);
+                    cumulativeCell.className = cumulative >= 0 ? 'cumulative positive' : 'cumulative negative';
+                }
+            });
+            
+            // 更新统计卡片
+            document.getElementById('total-invest').textContent = totalInvest;
+            document.getElementById('total-profit').textContent = cumulative.toFixed(2);
+            document.getElementById('total-profit').className = 'value ' + (cumulative >= 0 ? 'positive' : 'negative');
+            
+            const totalReturn = totalInvest > 0 ? (cumulative / totalInvest * 100).toFixed(2) + '%' : '-';
+            document.getElementById('total-return').textContent = totalReturn;
+            document.getElementById('hit-count').textContent = hitCount;
+            
+            saveData();
+        }
+        
+        // 导出数据
+        function exportData() {
+            const rows = document.querySelectorAll('#record-table tbody tr');
+            let csv = '日期,比赛,推荐,玩法,信心指数,概率评估,投入,赔率,赛果,收益,收益率,累计收益,备注\n';
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const rowData = [];
+                cells.forEach(cell => {
+                    const editable = cell.querySelector('.editable');
+                    if (editable) {
+                        rowData.push(editable.textContent);
+                    } else {
+                        rowData.push(cell.textContent);
+                    }
+                });
+                csv += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = '竞彩推荐记录_' + new Date().toLocaleDateString() + '.csv';
+            link.click();
+        }
+        
+        // 监听编辑事件 - 实时保存
+        document.querySelectorAll('.editable').forEach(cell => {
+            // 输入时实时保存
+            cell.addEventListener('input', function() {
+                saveData();
+                showSaveTip(this);
+            });
+            // 失去焦点时保存并计算
+            cell.addEventListener('blur', function() {
+                saveData();
+                // 如果赔率和赛果都填了，自动计算
+                const row = this.closest('tr');
+                const odds = row.querySelector('[data-field="odds"]').textContent;
+                const result = row.querySelector('[data-field="result"]').textContent;
+                if (odds !== '待填' && result !== '待确认' && !isNaN(parseFloat(odds))) {
+                    calculate();
+                }
+            });
+        });
+        
+        // 显示保存提示
+        function showSaveTip(element) {
+            const tip = document.createElement('span');
+            tip.textContent = '✓ 已保存';
+            tip.style.cssText = 'position: absolute; background: #52c41a; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 5px;';
+            element.parentElement.appendChild(tip);
+            setTimeout(() => tip.remove(), 1000);
+        }
+        
+        // 页面加载时恢复数据
+        window.onload = loadData;
+    </script>
+</body>
+</html>
+
+        <!-- 每日复盘区 -->
+        <div class="table-section">
+            <h2>📝 每日复盘</h2>
+            <div id="review-content" style="padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                <p style="color: #999; text-align: center;">暂无复盘记录，等待赛果确认后更新...</p>
+            </div>
+        </div>
